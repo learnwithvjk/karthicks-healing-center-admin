@@ -1,0 +1,106 @@
+{
+  "project_info": {
+    "project_number": "497103294924",
+    "firebase_url": "https://karthik-s-healing-centre-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "karthik-s-healing-centre",
+    "storage_bucket": "karthik-s-healing-centre.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:497103294924:android:fd3d59fe0b1cdb9ac60d69",
+        "android_client_info": {
+          "package_name": "com.clinicadmin"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "497103294924-3hqkpd2rujquhubrfqb2181s9tgl71jg.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.clinicadmin",
+            "certificate_hash": "e3996f0f6df8cce2014ee038be21028184454506"
+          }
+        },
+        {
+          "client_id": "497103294924-aprhbval5tlbf3ffqs3426qjntq771vg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAHPDvyDqVr4YKYtEtAXbrFczih9ho67vw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "497103294924-aprhbval5tlbf3ffqs3426qjntq771vg.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:497103294924:android:4115ebc3b7d52f82c60d69",
+        "android_client_info": {
+          "package_name": "com.karthikshealingcentre"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "497103294924-aprhbval5tlbf3ffqs3426qjntq771vg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAHPDvyDqVr4YKYtEtAXbrFczih9ho67vw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "497103294924-aprhbval5tlbf3ffqs3426qjntq771vg.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:497103294924:android:e6993cea5d1bce2ac60d69",
+        "android_client_info": {
+          "package_name": "com.karthikshealingcentreadmin"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "497103294924-aprhbval5tlbf3ffqs3426qjntq771vg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAHPDvyDqVr4YKYtEtAXbrFczih9ho67vw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "497103294924-aprhbval5tlbf3ffqs3426qjntq771vg.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
