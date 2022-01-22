@@ -4,7 +4,6 @@ import ProfileScreen from 'src/screens/profile-screens/ProfileScreen';
 import TitleCard from 'src/components/TitleCard';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {StyleSheet, View, Image, Text, TouchableOpacity} from 'react-native';
-
 export default function MainScreenNavigator() {
   const [modelOpen, setModelOpen] = useState(true);
   const Tab = createBottomTabNavigator();

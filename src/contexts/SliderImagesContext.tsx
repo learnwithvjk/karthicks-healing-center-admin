@@ -8,8 +8,13 @@ export const SliderImagedContext = React.createContext({
   initializeSliderImages: () => {
     console.log('initializeSliderImages dummy method called');
   },
-  updateSliderImages: (updatedImages: Array<any>) => {
-    console.log('updateSliderImages dummy method called', updatedImages);
+  updateSliderImages: (updatedImages: Array<any>, imageNumber: number) => {
+    console.log(
+      'updateSliderImages dummy method called',
+      updatedImages,
+      '.... ',
+      imageNumber,
+    );
   },
 });
 
@@ -42,14 +47,24 @@ export const SliderImagesProvider = ({children}: any) => {
     setIsSliderImagesLoading(false);
   };
 
-  const updateSliderImages = (updatedImages: Array<any>) => {
+  const updateSliderImages = async (
+    updatedImages: Array<any>,
+    imageNumber: number,
+  ) => {
     setIsSliderImagesLoading(true);
-    console.log('updating images');
-    console.log(updatedImages);
+    const reference = storage().ref(
+      `dashboard-slider/slider-image-${imageNumber}.jpg`,
+    );
+    //console.log('updating images');
+    console.log(
+      `updating images dashboard-slider/slider-image-${imageNumber}.jpg`,
+    );
+    await reference.putFile(updatedImages[imageNumber - 1]);
     setSliderImages(updatedImages);
     console.log('updating done');
     setIsSliderImagesLoading(false);
   };
+
   return (
     <SliderImagedContext.Provider
       value={{

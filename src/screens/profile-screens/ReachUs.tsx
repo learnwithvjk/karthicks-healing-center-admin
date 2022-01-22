@@ -11,13 +11,26 @@ import {
 } from 'react-native';
 import {ScrollView} from 'react-native-gesture-handler';
 import {commonErrorHandler} from 'src/error-handling/commonErrorHanlders';
-import {getClinicDetails} from 'src/api/HomeScreen';
+import {getClinicDetails, updateClinicDetails} from 'src/api/HomeScreen';
 import storage from '@react-native-firebase/storage';
 import {launchImageLibrary} from 'react-native-image-picker';
 import EditInputModal from 'src/components/EditInputModal';
+import auth from '@react-native-firebase/auth';
+
+const updateClinicInfo = async (key: string, value: any, clinicId: string) => {
+  let payload = {
+    queryParams: {
+      uid: auth().currentUser?.uid,
+      clinic_id: clinicId,
+    },
+  };
+  payload.queryParams[key] = value;
+  await updateClinicDetails(payload);
+};
 
 export default function ReachUs() {
   const [clinicDetails, setClinicDetails] = useState([]);
+  const [isAppLogoLoading, setIsAppLogoLoading] = useState(false);
   const [isClinicDetailsLoading, setIsClinicDetailsLoading] = useState(true);
   const [editInputModalConfig, setEditInputModalConfig] = useState({
     label: '',
@@ -80,21 +93,31 @@ export default function ReachUs() {
           <View style={styles.cardRhs}>
             <TouchableOpacity
               onPress={() => {
-                const onImageSelection = (selectedImage: any) => {
-                  console.log('image selected');
-                  console.log(selectedImage);
-                  if (selectedImage.didCancel) {
-                    console.log('cancel handled');
-                    return;
+                const onImageSelection = async (selectedImage: any) => {
+                  try {
+                    setIsAppLogoLoading(true);
+                    console.log('image selected');
+                    console.log(selectedImage);
+                    if (selectedImage.didCancel) {
+                      console.log('cancel handled');
+                      return;
+                    }
+                    await storage()
+                      .ref('app-logo.png')
+                      .putFile(selectedImage.assets[0].uri);
+                    setClinicDetails(
+                      JSON.parse(
+                        JSON.stringify({
+                          ...clinicDetails,
+                          app_logo: selectedImage.assets[0].uri,
+                        }),
+                      ),
+                    );
+                    setIsAppLogoLoading(false);
+                  } catch (err) {
+                    commonErrorHandler(err);
                   }
-                  setClinicDetails(
-                    JSON.parse(
-                      JSON.stringify({
-                        ...clinicDetails,
-                        app_logo: selectedImage.assets[0].uri,
-                      }),
-                    ),
-                  );
+
                   // setImages(
                   //   (previousValue: any) =>
                   //     (previousValue[index] = selectedImage.path),
@@ -117,13 +140,18 @@ export default function ReachUs() {
         </View>
         {/* </View> */}
         <View style={styles.body}>
-          <Image
-            source={{
-              uri: clinicDetails.app_logo,
-            }}
-            resizeMode="contain"
-            style={[styles.largeSizeImage]}
-          />
+          {isAppLogoLoading && (
+            <ActivityIndicator size="large" color="#0000ff" />
+          )}
+          {!isAppLogoLoading && (
+            <Image
+              source={{
+                uri: clinicDetails.app_logo,
+              }}
+              resizeMode="contain"
+              style={[styles.largeSizeImage]}
+            />
+          )}
         </View>
       </View>
     );
@@ -161,12 +189,21 @@ export default function ReachUs() {
                   <View style={styles.cardRhs}>
                     <TouchableOpacity
                       onPress={() => {
-                        const onNewAddressSave = (value: string) => {
-                          setClinicDetails({
-                            ...clinicDetails,
-                            address: value,
-                          });
-                          setShowEditInputModal(false);
+                        const onNewAddressSave = async (value: string) => {
+                          try {
+                            await updateClinicInfo(
+                              'address',
+                              value,
+                              clinicDetails.clinic_id,
+                            );
+                            setClinicDetails({
+                              ...clinicDetails,
+                              address: value,
+                            });
+                            setShowEditInputModal(false);
+                          } catch (err) {
+                            commonErrorHandler(err);
+                          }
                         };
                         setEditInputModalConfig({
                           label: 'Clinic address:',
@@ -207,12 +244,21 @@ export default function ReachUs() {
                   <View style={styles.cardRhs}>
                     <TouchableOpacity
                       onPress={() => {
-                        const onNewPhoneAdded = (value: string) => {
-                          setClinicDetails({
-                            ...clinicDetails,
-                            phone: value,
-                          });
-                          setShowEditInputModal(false);
+                        const onNewPhoneAdded = async (value: string) => {
+                          try {
+                            await updateClinicInfo(
+                              'phone',
+                              value,
+                              clinicDetails.clinic_id,
+                            );
+                            setClinicDetails({
+                              ...clinicDetails,
+                              phone: value,
+                            });
+                            setShowEditInputModal(false);
+                          } catch (err) {
+                            commonErrorHandler(err);
+                          }
                         };
                         setEditInputModalConfig({
                           label: 'Clinic Phone:',
@@ -253,12 +299,21 @@ export default function ReachUs() {
                   <View style={styles.cardRhs}>
                     <TouchableOpacity
                       onPress={() => {
-                        const onMapLocationChanged = (value: string) => {
-                          setClinicDetails({
-                            ...clinicDetails,
-                            map_url: value,
-                          });
-                          setShowEditInputModal(false);
+                        const onMapLocationChanged = async (value: string) => {
+                          try {
+                            await updateClinicInfo(
+                              'map_url',
+                              value,
+                              clinicDetails.clinic_id,
+                            );
+                            setClinicDetails({
+                              ...clinicDetails,
+                              map_url: value,
+                            });
+                            setShowEditInputModal(false);
+                          } catch (err) {
+                            commonErrorHandler(err);
+                          }
                         };
                         setEditInputModalConfig({
                           label: 'Clinic Map Location URL:',

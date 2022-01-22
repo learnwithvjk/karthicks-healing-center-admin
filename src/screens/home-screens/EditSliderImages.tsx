@@ -12,6 +12,7 @@ import storage from '@react-native-firebase/storage';
 import {launchImageLibrary} from 'react-native-image-picker';
 import {SliderImagedContext} from 'src/contexts/SliderImagesContext';
 import Spinner from 'react-native-loading-spinner-overlay';
+import {commonErrorHandler} from 'src/error-handling/commonErrorHanlders';
 
 const reference = storage().ref('black-t-shirt-sm.png');
 
@@ -33,29 +34,39 @@ export default function EditSliderImages({route, navigation}: any) {
           <View style={styles.cardRhs}>
             <TouchableOpacity
               onPress={() => {
-                const onImageSelection = (selectedImage: any) => {
-                  console.log('image selected');
-                  console.log(selectedImage);
-                  if (selectedImage.didCancel) {
-                    console.log('cancel handled');
-                    return;
-                  }
-                  let tempSliderImages = JSON.parse(
-                    JSON.stringify(sliderImagedContext.sliderImages),
+                try {
+                  const onImageSelection = async (selectedImage: any) => {
+                    console.log('currentImage');
+                    const imageNumber = index + 1;
+                    console.log(imageNumber);
+                    console.log('image selected');
+                    console.log(selectedImage);
+                    if (selectedImage.didCancel) {
+                      console.log('cancel handled');
+                      return;
+                    }
+                    let tempSliderImages = JSON.parse(
+                      JSON.stringify(sliderImagedContext.sliderImages),
+                    );
+                    tempSliderImages[index] = selectedImage.assets[0].uri;
+                    await sliderImagedContext.updateSliderImages(
+                      tempSliderImages,
+                      imageNumber,
+                    );
+                    // setImages(
+                    //   (previousValue: any) =>
+                    //     (previousValue[index] = selectedImage.path),
+                    // );
+                  };
+                  launchImageLibrary(
+                    {
+                      mediaType: 'photo',
+                    },
+                    onImageSelection,
                   );
-                  tempSliderImages[index] = selectedImage.assets[0].uri;
-                  sliderImagedContext.updateSliderImages(tempSliderImages);
-                  // setImages(
-                  //   (previousValue: any) =>
-                  //     (previousValue[index] = selectedImage.path),
-                  // );
-                };
-                launchImageLibrary(
-                  {
-                    mediaType: 'photo',
-                  },
-                  onImageSelection,
-                );
+                } catch (err) {
+                  commonErrorHandler(err);
+                }
               }}>
               <Image
                 source={require('assets/pngs/edit-1.png')}

@@ -26,8 +26,8 @@ const setBookingDetails = (
   const payload = {
     queryParams: {
       uid: uid,
-      startsFrom: 1,
-      limit: 1,
+      from: 0,
+      limit: 10,
     },
   };
   console.log('getting bookings');

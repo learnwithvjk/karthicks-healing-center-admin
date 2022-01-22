@@ -8,6 +8,7 @@ import {
   Image,
   ScrollView,
   TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import {globalStyles} from 'src/styles/global';
 import {Formik} from 'formik';
@@ -20,8 +21,12 @@ export default function EditInputModal({
   value,
   onSave,
 }: any) {
-  function handleSave(updatedObj: any) {
-    onSave(updatedObj.value);
+  const [isLoading, setIsLoading] = useState(false);
+
+  async function handleSave(updatedObj: any) {
+    setIsLoading(true);
+    await onSave(updatedObj.value);
+    setIsLoading(false);
   }
 
   const ruleForOnlineVisit = Yup.object().shape({
@@ -70,12 +75,14 @@ export default function EditInputModal({
                   />
                 </ScrollView>
               </View>
+
               <TouchableOpacity
                 onPress={() => {
                   handleSubmit();
                 }}
                 style={styles.addNewButtonWrapper}>
-                <Text style={styles.addNewLabel}>save </Text>
+                {isLoading && <ActivityIndicator size="large" color="#fff" />}
+                {!isLoading && <Text style={styles.addNewLabel}>save </Text>}
               </TouchableOpacity>
             </View>
           )}

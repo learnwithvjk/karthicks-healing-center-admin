@@ -23,6 +23,8 @@ import {getYoutubeVideos} from 'src/api/HomeScreen';
 import {SliderBox} from 'react-native-image-slider-box';
 import EditInputModal from 'src/components/EditInputModal';
 import {SliderImagedContext} from 'src/contexts/SliderImagesContext';
+import {updateYoutubeVidoes} from 'src/api/HomeScreen';
+import auth from '@react-native-firebase/auth';
 
 export const sliderImagesContext = React.createContext(undefined as any);
 
@@ -87,7 +89,7 @@ export default function HomeScreen({navigation}: any) {
 
   const [showEditInputModal, setShowEditInputModal] = useState(false);
 
-  function videoWithEditButton({item, index}: any) {
+  function VideoWithEditButton({item, index}: any) {
     return (
       <View style={styles.card}>
         {/* <View style={styles.header}> */}
@@ -100,28 +102,43 @@ export default function HomeScreen({navigation}: any) {
           <View style={styles.cardRhs}>
             <TouchableOpacity
               onPress={() => {
-                const updateVideo = (value: string) => {
-                  console.log('updated youtube videos');
-                  console.log(value);
-                  const regExp =
-                    /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-                  const match = value.match(regExp);
-                  if (match && match[2].length === 11) {
-                    console.log(match[2]);
-                    let newSetOfVideos = JSON.parse(
-                      JSON.stringify(youtubeVideos),
-                    );
-                    newSetOfVideos[index] = match[2];
-                    setYoutubeVideos(newSetOfVideos);
-                  } else {
-                    //error
-                    commonErrorHandler(
-                      new Error(
-                        'error while decoding Youtube URL, try a different URL',
-                      ),
-                    );
+                const updateVideo = async (value: string | undefined) => {
+                  try {
+                    if (!value) {
+                      return;
+                    }
+                    console.log('updated youtube videos');
+                    console.log(value);
+                    const regExp =
+                      /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+                    const match = value.match(regExp);
+                    if (match && match[2].length === 11) {
+                      console.log(match[2]);
+                      let newSetOfVideos = JSON.parse(
+                        JSON.stringify(youtubeVideos),
+                      );
+                      const payload = {
+                        queryParams: {
+                          uid: auth().currentUser?.uid,
+                          video_id: newSetOfVideos[index],
+                          udpated_video_id: match[2],
+                        },
+                      };
+                      await updateYoutubeVidoes(payload);
+                      newSetOfVideos[index] = match[2];
+                      setYoutubeVideos(newSetOfVideos);
+                    } else {
+                      //error
+                      commonErrorHandler(
+                        new Error(
+                          'error while decoding Youtube URL, try a different URL',
+                        ),
+                      );
+                    }
+                    setShowEditInputModal(false);
+                  } catch (err) {
+                    commonErrorHandler(err);
                   }
-                  setShowEditInputModal(false);
                 };
 
                 setEditInputModalConfig({
@@ -281,13 +298,39 @@ export default function HomeScreen({navigation}: any) {
             <ActivityIndicator size="large" color="#0000ff" />
           )}
           {!isYoutubeUrlsLoading && (
-            <FlatList
-              data={youtubeVideos}
-              renderItem={videoWithEditButton}
-              extraData={videoWithEditButton}
-              initialNumToRender={0}
-              keyExtractor={item => item}
-            />
+            // <View>
+            //   <Text>Need to look for an alternative</Text>
+            // </View>
+            // <FlatList
+            //   data={youtubeVideos}
+            //   renderItem={VideoWithEditButton}
+            //   extraData={VideoWithEditButton}
+            //   initialNumToRender={0}
+            //   keyExtractor={item => item}
+            // />
+            <ScrollView>
+              {isYoutubeUrlsLoading && (
+                <ActivityIndicator size="large" color="#0000ff" />
+              )}
+              {!isYoutubeUrlsLoading && (
+                <View style={styles.videoWrapper}>
+                  {youtubeVideos.map((videoId: string, index: number) => (
+                    <VideoWithEditButton
+                      key={index}
+                      item={youtubeVideos[index]}
+                      index={index}
+                    />
+                    // <YoutubePlayer
+                    //   key={index}
+                    //   height={250}
+                    //   play={false}
+                    //   videoId={videoId}
+                    // />
+                  ))}
+                </View>
+              )}
+              <View style={styles.emptyMargin} />
+            </ScrollView>
           )}
         </View>
       </ScrollView>
