@@ -18,14 +18,21 @@ import AdminMainScreenNavigator from 'src/screens/AdminMainScreenNavigator';
 import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
 import auth from '@react-native-firebase/auth';
-import ReachUs from 'src/screens/profile-screens/ReachUs';
-import VisitorForm from 'src/forms/VisitorForm';
-import BookingForm from 'src/forms/BookingForm';
 import {UserContext} from 'src/contexts/Context';
 // Must be outside of any component LifeCycle (such as `componentDidMount`).
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
 import {checkIfUserIsAdmin} from 'src/api/Auth';
 import 'react-native-gesture-handler';
+// import NotificationController from 'src/services/NotificationService';
+import PushNotification from 'react-native-push-notification';
+
+const createChannels = () => {
+  PushNotification.createChannel({
+    channelId: 'fcm_fallback_notification_channel',
+    channelName: 'Test Channel',
+  });
+};
+
 const App = () => {
   const backgroundStyle = {
     backgroundColor: '#fff',
@@ -35,6 +42,7 @@ const App = () => {
   const [isError, setIsError] = useState(false);
   const maninScreenOpacity = useRef(new Animated.Value(0)).current;
   const splashScreenOpacity = useRef(new Animated.Value(1)).current;
+
   const fadeIn = () => {
     Animated.sequence([
       Animated.timing(splashScreenOpacity, {
@@ -58,6 +66,7 @@ const App = () => {
 
   useEffect(() => {
     console.log('App.tsx mounted');
+    // createChannels();
   }, []);
 
   useEffect(() => {
@@ -147,48 +156,13 @@ const App = () => {
 
   const AppScreenNavigator = () => (
     <UserContext.Provider value={uidStr}>
-      <Stack.Navigator
-      // screenOptions={{
-      //   presentation: 'modal',
-      // }}
-      >
+      <Stack.Navigator>
         <Stack.Screen
           options={{
             headerShown: false,
           }}
           name="MainScreen"
           component={AdminMainScreenNavigator}
-        />
-        <Stack.Screen
-          options={{
-            headerShown: false,
-            presentation: 'modal',
-            animation: 'slide_from_bottom',
-          }}
-          name="BookingFormModal"
-          component={BookingForm}
-        />
-        <Stack.Screen
-          options={{
-            headerShown: false,
-            presentation: 'modal',
-            animation: 'slide_from_bottom',
-          }}
-          name="VisitorFormModal"
-          component={VisitorForm}
-        />
-
-        <Stack.Screen
-          options={{
-            title: 'Reach us',
-            headerLargeTitle: true,
-            headerTintColor: '#00790D',
-            headerTitleStyle: {
-              color: '#00790D',
-            },
-          }}
-          name="ReachUs"
-          component={ReachUs}
         />
       </Stack.Navigator>
     </UserContext.Provider>
@@ -197,6 +171,7 @@ const App = () => {
   return (
     <NavigationContainer>
       <SafeAreaProvider>
+        {/* <NotificationController /> */}
         <SafeAreaView style={backgroundStyle}>
           <Animated.View
             style={[styles.splashScreenView, {opacity: splashScreenOpacity}]}>

@@ -144,7 +144,9 @@ export default function BookingListingScreen({route, navigation}: any) {
             <View style={styles.moreInfo}>
               <Text style={styles.name}>{item.visitor_name}</Text>
               {item.cause && <Text style={styles.seperator}>|</Text>}
-              {item.cause && <Text style={styles.cause}>{item.cause}</Text>}
+              {item.cause && (
+                <Text style={styles.cause}>{item.phone_number}</Text>
+              )}
             </View>
           </View>
           <View style={styles.cardRhs}>

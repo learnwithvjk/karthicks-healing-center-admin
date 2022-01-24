@@ -2,7 +2,6 @@ import React from 'react';
 import HomeScreen from 'src/screens/home-screens/HomeScreen';
 import {createStackNavigator} from '@react-navigation/stack';
 import EditSliderImages from 'src/screens/home-screens/EditSliderImages';
-import EditYoutubeVideos from 'src/screens/home-screens/EditYoutubeVideos';
 import {SliderImagesProvider} from 'src/contexts/SliderImagesContext';
 export default function HomeScreenNavigator() {
   const Stack = createStackNavigator();

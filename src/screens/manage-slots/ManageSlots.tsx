@@ -1,5 +1,6 @@
 import React, {useContext, useState} from 'react';
 import {
+  ActivityIndicator,
   Alert,
   FlatList,
   StyleSheet,
@@ -27,8 +28,16 @@ const ManageSlots: React.FC<ManageSlotsProps> = ({}) => {
   const selectedDateContext = useContext(SelectedDateContext);
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [isThisDayHoliday, setIsThisDayHoliday] = useState(false);
+  const [stopBooking, setStopBooking] = useState(false);
+  const [isNewTimeSlotLoaing, setNewTimeSlotLoaing] = useState(false);
+  const [newTiming, setNewTiming] = useState('');
+  const [defaultTimings, setDefaultTimings] = useState(undefined);
+  const [defaultAvailableTime, setDefaultAvailableTimeCount] =
+    useState(undefined);
+  const [defaultTimingNames, setdefaultTimingNames] = useState(undefined);
 
   const [dateType, setDateType] = useState('e');
+  const [dayType, setDayType] = useState('f');
 
   const [timings, setTimings] = useState([]);
   const showDatePicker = () => {
@@ -96,25 +105,74 @@ const ManageSlots: React.FC<ManageSlotsProps> = ({}) => {
     setIsThisDayHoliday(!isThisDayHoliday);
   }
 
-  const TimingSlot = ({item, index}: any) => {
+  const addNewTiming = () => {
+    if (!newTiming) {
+      return;
+    }
+
+    setTimings(previousTiming => {
+      setNewTimeSlotLoaing(true);
+      previousTiming.push({
+        slot_time: newTiming,
+        available_count: 0,
+        order: timings.length + 1,
+        is_newly_added: true,
+      });
+      console.log(previousTiming);
+      setNewTimeSlotLoaing(false);
+      setNewTiming('');
+      return previousTiming;
+    });
+  };
+
+  const removeTiming = timeSlot => {
+    setTimings(previousTiming => {
+      return previousTiming.filter(
+        timingSlot => timingSlot.slot_time !== timeSlot,
+      );
+    });
+  };
+
+  const TimingSlot = ({
+    timeName,
+    availableCount,
+    onAvailabeCountChange,
+    onRemoveTiming,
+    showCancelButton = false,
+    showAvailableCount = false,
+  }: any) => {
     // console.log(item);
     return (
       <View style={styles.timeWrapper}>
-        <Text style={styles.slotTimeText}> {item.slot_time}</Text>
-        <TextInput
-          style={[globalStyles.input, styles.timingInput]}
-          multiline
-          keyboardType="numeric"
-          placeholderTextColor="grey"
-          onChangeText={value => handleTimiChange(index, value)}
-          value={item.available_count.toString()}
-        />
+        {timeName && <Text style={styles.slotTimeText}> {timeName}</Text>}
+
+        {showAvailableCount && (
+          <TextInput
+            style={[globalStyles.input, styles.timingInput]}
+            multiline
+            keyboardType="numeric"
+            placeholderTextColor="grey"
+            onChangeText={onAvailabeCountChange}
+            value={availableCount.toString()}
+          />
+        )}
+
+        {showCancelButton && (
+          <TouchableOpacity
+            style={styles.removeNewTimingWrapper}
+            onPress={() => onRemoveTiming(timeName)}>
+            <Text style={styles.removeNewTimingText}>X</Text>
+          </TouchableOpacity>
+        )}
       </View>
     );
   };
 
   async function updateDateInfo() {
     try {
+      timings.forEach(function (elem) {
+        delete elem.is_newly_added;
+      });
       const updatedDateFieldObj = {
         date: tempDate.toDateString().toString(),
         is_holiday: isThisDayHoliday,
@@ -141,12 +199,87 @@ const ManageSlots: React.FC<ManageSlotsProps> = ({}) => {
     }
   }
 
+  async function updateDefaultTimeInfo() {
+    try {
+      const newDefaultTimings = {
+        ...defaultTimings,
+        available_count: defaultAvailableTime,
+        stop_booking: stopBooking,
+      };
+      console.log(newDefaultTimings);
+      await selectedDateContext.updateDefaultTimeDetails(newDefaultTimings);
+      Alert.alert('Time Configuration updated', undefined, [{text: 'OK'}]);
+    } catch (err) {
+      commonErrorHandler(err);
+    }
+  }
+
   async function handleSubmit() {
-    if (dateType === 'e') {
+    if (dateType === 'ats') {
+      await updateDefaultTimeInfo();
+    } else if (dateType === 'e') {
       await updateDateInfo();
     } else {
       await addDateInfo();
     }
+  }
+
+  async function updateDefaultTimingDetails(key: string, value: any) {
+    console.log(value);
+    setDefaultTimings(previousDefaultTimings => {
+      previousDefaultTimings[key] = value;
+      return previousDefaultTimings;
+    });
+  }
+
+  function handleDefaultTimeNameRemoval(removedName) {
+    setdefaultTimingNames(previousNames => {
+      return previousNames.filter(name => name !== removedName);
+    });
+    const key = dayType === 'f' ? 'timings' : 'timings_half_day';
+    console.log(key);
+    updateDefaultTimingDetails(
+      key,
+      !defaultTimingNames
+        ? []
+        : defaultTimingNames.filter(name => name !== removedName),
+    );
+  }
+
+  function setNewTimingName() {
+    setNewTiming(newTiming);
+    setdefaultTimingNames(previousNames => {
+      previousNames.push(newTiming);
+      return previousNames;
+    });
+    const key = dayType === 'f' ? 'timings' : 'timings_half_day';
+    updateDefaultTimingDetails(key, defaultTimingNames);
+    setNewTiming('');
+  }
+
+  function handleDayTypeChange(value: string) {
+    setdefaultTimingNames(
+      value === 'f' ? defaultTimings.timings : defaultTimings.timings_half_day,
+    );
+    setDayType(value);
+  }
+
+  async function handleDateTypeChange(value: string) {
+    setSelectedDate(undefined);
+    if (value === 'ats') {
+      const defaultTimingsObj =
+        await selectedDateContext.initializeDefaultTimeDetails();
+      console.log(defaultTimingsObj);
+      setDefaultTimings(defaultTimingsObj);
+      setStopBooking(defaultTimingsObj.stop_booking);
+      setDefaultAvailableTimeCount(defaultTimingsObj.available_count);
+      setdefaultTimingNames(defaultTimingsObj.timings); // since f is default selected
+      setTimeout(() => {
+        console.log('test');
+        console.log(defaultTimings);
+      }, 2000);
+    }
+    setDateType(value);
   }
 
   return (
@@ -172,50 +305,32 @@ const ManageSlots: React.FC<ManageSlotsProps> = ({}) => {
                   optionKey: 'e',
                   color: dateType === 'e' ? '#ff0000' : undefined,
                 },
+                {
+                  label: 'Edit Time Slot',
+                  optionKey: 'ats',
+                  color: dateType === 'ats' ? '#ff0000' : undefined,
+                },
               ]}
               value={dateType}
-              onChange={setDateType}
+              onChange={handleDateTypeChange}
             />
           </View>
-          <View style={styles.DateSelectWrapper}>
-            <Text style={styles.DateSelectTitle}> Select a Date </Text>
-            <View>
-              <TouchableWithoutFeedback onPress={showDatePicker}>
-                <Text
-                  style={[
-                    globalStyles.input,
-                    selectedDate ? styles.dateSelectedText : styles.placeHolder,
-                  ]}>
-                  {selectedDate
-                    ? `${selectedDate}`
-                    : 'Pick a date to get details'}
-                </Text>
-              </TouchableWithoutFeedback>
-              <DateTimePickerModal
-                isVisible={isDatePickerVisible}
-                mode="date"
-                date={tempDate}
-                onConfirm={(newDate: Date) => handleConfirm(newDate)}
-                onCancel={hideDatePicker}
-              />
-            </View>
-          </View>
-          {dateType === 'e' && selectedDateContext.selectedDateDetails && (
+          {defaultTimings !== undefined && dateType === 'ats' && (
             <View>
               <View style={styles.currentStatusWrapper}>
-                {!isThisDayHoliday && (
+                {stopBooking && (
                   <View style={styles.statusWrapper}>
                     {/* <View style={styles.greenCircle} /> */}
                     <Text style={styles.checkedOutStatus}>
-                      This Day is not an Holiday
+                      Bookings are disabled now
                     </Text>
                   </View>
                 )}
-                {isThisDayHoliday && (
+                {!stopBooking && (
                   <View style={styles.statusWrapper}>
                     {/* <View style={styles.greyCircle} /> */}
                     <Text style={styles.checkedOutStatus}>
-                      This Day is an Holiday
+                      Bookins are enabled now
                     </Text>
                   </View>
                 )}
@@ -224,40 +339,203 @@ const ManageSlots: React.FC<ManageSlotsProps> = ({}) => {
                     trackColor={{false: 'grey', true: 'blue'}}
                     thumbColor={'#f4f3f4'}
                     ios_backgroundColor="#3e3e3e"
-                    onValueChange={toggleSwitch}
-                    value={isThisDayHoliday}
+                    onValueChange={() => setStopBooking(!stopBooking)}
+                    value={!stopBooking}
                   />
                 </View>
               </View>
-
+              <View style={styles.DateSelectWrapper}>
+                <TimingSlot
+                  timeName="Default Available Count"
+                  availableCount={defaultAvailableTime}
+                  showAvailableCount={true}
+                  onAvailabeCountChange={setDefaultAvailableTimeCount}
+                  showCancelButton={false}
+                />
+              </View>
+              <View style={styles.DateSelectWrapper}>
+                <RadioButtonGroup
+                  options={[
+                    {
+                      label: 'Half Day Slots',
+                      optionKey: 'h',
+                      color: dateType === 'h' ? '#ff0000' : undefined,
+                    },
+                    {
+                      label: 'Full Day Slots',
+                      optionKey: 'f',
+                      color: dateType === 'f' ? '#ff0000' : undefined,
+                    },
+                  ]}
+                  value={dayType}
+                  onChange={handleDayTypeChange}
+                />
+              </View>
               <View style={styles.currentStatusWrapper}>
-                {timings && (
+                {defaultTimingNames && (
                   <View>
                     <Text style={styles.checkedOutStatus}>
-                      Modify Timings:{' '}
+                      Modify Default Timings:
                     </Text>
                     <ScrollView>
-                      {timings.map((timingSlot, index) => (
-                        <TimingSlot
-                          key={timingSlot.slot_time}
-                          item={timingSlot}
-                          index={index}
-                        />
-                      ))}
+                      {defaultTimingNames.map(
+                        (timingName, index) =>
+                          timingName && (
+                            <TimingSlot
+                              key={`timingSlot.slot_time - ${index}`}
+                              timeName={timingName}
+                              showAvailableCount={false}
+                              showCancelButton={true}
+                              onRemoveTiming={handleDefaultTimeNameRemoval}
+                            />
+                          ),
+                      )}
+                      {isNewTimeSlotLoaing && (
+                        <ActivityIndicator size={'large'} color={'#0000ff'} />
+                      )}
+                      {!isNewTimeSlotLoaing && (
+                        <View style={styles.timeWrapper}>
+                          <TextInput
+                            style={[globalStyles.input, styles.addtimingInput]}
+                            multiline
+                            placeholderTextColor="grey"
+                            onChangeText={setNewTiming}
+                            value={newTiming}
+                          />
+                          <TouchableOpacity onPress={setNewTimingName}>
+                            <Text style={styles.addNewTimingText}>
+                              Add New Timing
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      )}
                     </ScrollView>
                   </View>
                 )}
               </View>
             </View>
           )}
+          {dateType !== 'ats' && (
+            <View>
+              <View style={styles.DateSelectWrapper}>
+                <Text style={styles.DateSelectTitle}> Select a Date </Text>
+                <View>
+                  <TouchableWithoutFeedback onPress={showDatePicker}>
+                    <Text
+                      style={[
+                        globalStyles.input,
+                        selectedDate
+                          ? styles.dateSelectedText
+                          : styles.placeHolder,
+                      ]}>
+                      {selectedDate
+                        ? `${selectedDate}`
+                        : 'Pick a date to get details'}
+                    </Text>
+                  </TouchableWithoutFeedback>
+                  <DateTimePickerModal
+                    isVisible={isDatePickerVisible}
+                    mode="date"
+                    date={tempDate}
+                    onConfirm={(newDate: Date) => handleConfirm(newDate)}
+                    onCancel={hideDatePicker}
+                  />
+                </View>
+              </View>
+              {dateType === 'e' && selectedDateContext.selectedDateDetails && (
+                <View>
+                  <View style={styles.currentStatusWrapper}>
+                    {!isThisDayHoliday && (
+                      <View style={styles.statusWrapper}>
+                        {/* <View style={styles.greenCircle} /> */}
+                        <Text style={styles.checkedOutStatus}>
+                          This Day is not an Holiday
+                        </Text>
+                      </View>
+                    )}
+                    {isThisDayHoliday && (
+                      <View style={styles.statusWrapper}>
+                        {/* <View style={styles.greyCircle} /> */}
+                        <Text style={styles.checkedOutStatus}>
+                          This Day is an Holiday
+                        </Text>
+                      </View>
+                    )}
+                    <View style={styles.rhs}>
+                      <Switch
+                        trackColor={{false: 'grey', true: 'blue'}}
+                        thumbColor={'#f4f3f4'}
+                        ios_backgroundColor="#3e3e3e"
+                        onValueChange={toggleSwitch}
+                        value={isThisDayHoliday}
+                      />
+                    </View>
+                  </View>
+
+                  <View style={styles.currentStatusWrapper}>
+                    {timings && (
+                      <View>
+                        <Text style={styles.checkedOutStatus}>
+                          Modify Timings:{' '}
+                        </Text>
+                        <ScrollView>
+                          {timings.map((timingSlot, index) => (
+                            <TimingSlot
+                              key={`timingSlot.slot_time - ${index}`}
+                              timeName={timingSlot.slot_time}
+                              availableCount={timingSlot.available_count}
+                              onAvailabeCountChange={value =>
+                                handleTimiChange(index, value)
+                              }
+                              showAvailableCount={true}
+                              showCancelButton={timingSlot.is_newly_added}
+                              onRemoveTiming={removeTiming}
+                            />
+                          ))}
+                          {isNewTimeSlotLoaing && (
+                            <ActivityIndicator
+                              size={'large'}
+                              color={'#0000ff'}
+                            />
+                          )}
+                          {!isNewTimeSlotLoaing && (
+                            <View style={styles.timeWrapper}>
+                              <TextInput
+                                style={[
+                                  globalStyles.input,
+                                  styles.addtimingInput,
+                                ]}
+                                multiline
+                                placeholderTextColor="grey"
+                                onChangeText={setNewTiming}
+                                value={newTiming}
+                              />
+                              <TouchableOpacity onPress={addNewTiming}>
+                                <Text style={styles.addNewTimingText}>
+                                  Add New Timing
+                                </Text>
+                              </TouchableOpacity>
+                            </View>
+                          )}
+                        </ScrollView>
+                      </View>
+                    )}
+                  </View>
+                </View>
+              )}
+            </View>
+          )}
         </ScrollView>
-        <View style={styles.saveButtonWrapper}>
-          {selectedDate && (
+        {(dateType === 'ats' || selectedDate) && (
+          <View style={styles.saveButtonWrapper}>
             <TouchableOpacity
               onPress={() => {
                 handleSubmit();
               }}
               style={styles.addNewButtonWrapper}>
+              {dateType === 'ats' && (
+                <Text style={styles.addNewLabel}>save configuration </Text>
+              )}
               {dateType === 'e' && (
                 <Text style={styles.addNewLabel}>save configuration </Text>
               )}
@@ -265,8 +543,8 @@ const ManageSlots: React.FC<ManageSlotsProps> = ({}) => {
                 <Text style={styles.addNewLabel}>add date</Text>
               )}
             </TouchableOpacity>
-          )}
-        </View>
+          </View>
+        )}
       </View>
     </SelectedDateDetailsProvider>
   );
@@ -327,6 +605,10 @@ const styles = StyleSheet.create({
     color: '#000',
     fontWeight: '500',
   },
+  addtimingInput: {
+    width: '50%',
+    marginRight: 'auto',
+  },
   timingInput: {
     width: '50%',
     marginLeft: 'auto',
@@ -360,6 +642,23 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 22,
     fontWeight: '600',
+  },
+  removeNewTimingWrapper: {
+    marginLeft: 'auto',
+  },
+  removeNewTimingText: {
+    color: 'red',
+    fontWeight: '700',
+    fontSize: 20,
+  },
+  addNewTimingText: {
+    color: 'blue',
+  },
+  addNewTimingWrapper: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
   },
 });
 
