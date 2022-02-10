@@ -262,6 +262,7 @@ export default function HomeScreen({navigation}: any) {
                   dotColor="#00790D"
                   ImageComponentStyle={styles.imageStyle}
                   sliderBoxHeight={200}
+                  resizeMode="stretch"
                   images={sliderImagedContext.sliderImages}
                 />
               </View>

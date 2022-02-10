@@ -82,6 +82,7 @@ export default function EditSliderImages({route, navigation}: any) {
             source={{
               uri: item,
             }}
+            resizeMode="stretch"
             style={styles.displayImage}
           />
         </View>
